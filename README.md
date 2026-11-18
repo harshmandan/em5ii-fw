@@ -93,10 +93,25 @@ toolchains/build/binutils/objdump -b binary -m mn10300 -D -z --adjust-vma=0x6002
 python3 tools/find_color_table.py
 python3 tools/match_penf_code.py
 python3 tools/selector_twins.py
+python3 tools/section_tails.py
 ```
 
 Each script checks its input hashes first and exits non-zero if a finding in
 [docs/FINDINGS.md](docs/FINDINGS.md) no longer holds.
+
+## Build the stage 1 patch
+
+```bash
+python3 tools/build_stage1.py --carrier-mode 5
+```
+
+This writes `generated/stage1/main.bin`, a patched main block for om-emu's
+`--main` option, and `generated/stage1/build.json`. It is not an update file
+and cannot be installed on a camera. The carrier mode number is still a guess;
+see [findings, section 3](docs/FINDINGS.md).
+
+The COLOR builder code and its gain data are not stored in this repository.
+The build reads them from your own PEN-F firmware file and checks its hash.
 
 ## Credits
 

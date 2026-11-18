@@ -1,0 +1,5 @@
+{
+  "name": "test-look",
+  "comment": "Twelve saturation steps, -5..+5, in wheel order: yellow, orange, red, rose, magenta, violet, blue, azure, cyan, teal, green, lime. A strong, obvious test pattern so a first photo shows at a glance whether the patch is active.",
+  "saturation": [5, 5, 5, 0, 0, 0, -5, -5, -5, 0, 0, 0]
+}
