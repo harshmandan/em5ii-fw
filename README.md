@@ -94,6 +94,7 @@ python3 tools/find_color_table.py
 python3 tools/match_penf_code.py
 python3 tools/selector_twins.py
 python3 tools/section_tails.py
+python3 tools/updater_twins.py
 ```
 
 Each script checks its input hashes first and exits non-zero if a finding in

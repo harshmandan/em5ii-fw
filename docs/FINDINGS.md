@@ -510,17 +510,66 @@ used. (R)
 ### 7.4 What is not known about installing
 
 - No modified file from this project has been installed on any camera.
-- Whether this body accepts a main-only file. On the PEN-F a same-version
-  main-only package passes the mapped acceptance path and component-selective
-  files have worked on a real camera. (R) Nothing shows that for the E-M5 II.
-- How the SD client is started. On the PEN-F even upstream has not connected
-  the button press to the client in code. (R)
+- Whether this body accepts a main-only file. Section 8 shows its updater
+  has the PEN-F's control flow, where such a file is accepted. Likely, not
+  shown.
+- How the SD client is started. Section 8.3.
 - What happens after a failed or interrupted write. No recovery route is
   established for this body. The update rewrites whole components and has no
   rollback. (R, PEN-F)
 - The one published modified file for E-M5 II 4.1 changes 6 bytes of main in
   a four-block file. (R) It shows the checksum scheme was enough for that
   file. It does not show that added code in a section tail runs.
+
+## 8. The SD update client and the shared updater (2026-11-18)
+
+`tools/updater_twins.py`, plus objdump listings.
+
+### 8.1 Both exist and mirror the PEN-F
+
+| Role | PEN-F | E-M5 II |
+| --- | --- | --- |
+| SD update client | `0x60b1cbb5` | `0x60b5e53d` |
+| File name matcher | `0x6059cdb5` | `0x60597d96` |
+| Shared updater | `0x60b1d527` | `0x60b5eea6` |
+| SD pre-check stub | `0x60b1ce0c` | `0x60b5e78f` |
+| No-file fallback | `0x601c8e6e` | `0x601d50b2` (R) |
+
+- The task table row at `0x6003a128` is the same on both: task 95, priority
+  45, stack 2,048 bytes, entering the SD client. (B)
+- The client searches `DCOLYMP` for `E118????BIN`. (B)
+- Listing every compare, call, return and jump of the SD client gives 48
+  steps on each body. They agree except one register in one compare. (D)
+- The same listing of the shared updater's first 1,536 bytes gives 145 steps
+  on each body. They agree except one constant, used eight times: 4640 on
+  the PEN-F and 4480 here. Those are the model codes `0x1220` and `0x1180`.
+  (D, B)
+- The pre-check stub is `clr d0; retf` on both. (B)
+
+Call targets were masked in that comparison, so it shows the same control
+flow, not that every callee is the same.
+
+### 8.2 What follows for a file's acceptance
+
+oly_fw_analysis reports for the PEN-F updater, from native execution: a stale
+main checksum is refused with error `0x3211` before any flash request; a
+valid component followed by a corrupt one is refused before either is
+written; a correct same-version main-only package passes. (R)
+
+Since the E-M5 II updater has the same control flow with its own model code,
+the same rules most likely apply here. (I) This was not executed for the
+E-M5 II: the update files are too large for om-emu's call scratch, and
+upstream's updater probe is built for the PEN-F image.
+
+### 8.3 How the client is started is still unknown
+
+Upstream has not connected the physical "OK held at power-on" to task 95 in
+the PEN-F's code, and says so. (R) Nothing here changes that for the E-M5 II.
+What exists is use on real cameras: PEN-F installs by that route, and E-M10
+reports. (R) No report was found for the E-M5 II.
+
+If no matching file is found, the PEN-F client takes a fallback into the
+ordinary start-up. (R) The E-M5 II has the matching fallback. (R)
 
 ## Open questions
 

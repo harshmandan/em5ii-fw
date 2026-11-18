@@ -38,7 +38,8 @@ No new screen. Twelve saturation values are baked into the patch.
 - [x] Check that the patch changes only what COLOR changes on the PEN-F.
 - [x] Read the four mode readers outside the stage list.
 - [x] Pack update files and a stock restore file; prove the stock round trip.
-- [ ] Read the E-M5 II SD update client: acceptance rules and how it starts.
+- [x] Compare the E-M5 II SD update client and updater with the PEN-F.
+- [ ] Find how the SD client is started on this body. Not known in code on any body.
 - [ ] First camera test. Owner's decision, with the restore file on a second card.
 
 Done when: the overlay runs clean in om-emu and the first camera test shows the
