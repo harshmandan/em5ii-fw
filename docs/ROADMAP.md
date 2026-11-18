@@ -34,7 +34,8 @@ No new screen. Twelve saturation values are baked into the patch.
 - [ ] Confirm the carrier (mode 5) on a camera or by a further trace.
 - [x] Run the patched main block in om-emu through S2.
 - [x] Call the selector directly in om-emu and match the PEN-F records.
-- [ ] Check that nothing writes into the section tail used.
+- [x] Check that nothing found reads or writes the section tail used.
+- [x] Check that the patch changes only what COLOR changes on the PEN-F.
 - [ ] Build the update file and a matching stock restore file.
 
 Done when: the overlay runs clean in om-emu and the first camera test shows the

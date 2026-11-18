@@ -252,8 +252,8 @@ loaded free space is about 5.8 KB. That is enough for stages 1 and 2. It is
 not enough for an editor screen, which will need a section's loaded end
 extended. (I)
 
-Not yet checked: that nothing writes into these tails at run time, and that
-section 1 is always loaded before the selector runs.
+Section 6.1 looks at whether anything touches the tail used. Not yet checked:
+that section 1 is always loaded before the selector runs.
 
 ### 3.4 The stage 1 patch
 
@@ -396,12 +396,79 @@ Mode 5 costs the user i-Enhance, if that name is right. i-Enhance also adapts
 to the scene somewhere outside this stage. Whether that still runs under the
 patch is not known.
 
+## 6. Risk review of the stage 1 patch (2026-11-18)
+
+`tools/emu_stage_diff.mjs` for 6.2 to 6.4.
+
+### 6.1 The free tail of section 1
+
+- Three 32-bit values in the main block fall inside the tail
+  `0x603f8128..0x603f8800`, apart from the loaded end itself. Two are bytes of
+  `call` instructions that only look like addresses. (D)
+- The third is real: `0x6006da8e` loads `0x603f8128`, the first byte of the
+  tail. It is the loader's per-section init step. Each section has a byte
+  count and a pointer to a table that ends where its tail begins. For this
+  section the count is the constant 0 and the step is skipped. (D) The
+  neighbouring sections have counts of 48 and 156, and their tables end
+  exactly at their tails, which supports this reading. (B)
+- A traced om-emu session on the patched build (start, half press, shot,
+  playback, menu, power off) recorded no write into the tail. (X)
+
+So nothing found reads or writes the tail. Static scans cannot rule out
+computed addresses, and om-emu does not run the capture pipeline.
+
+### 6.2 The carrier mode is Natural plus one chroma word
+
+Running the whole stage list (`0x604e02c6`) on stock firmware, mode 5 and
+mode 2 give identical output except 3 bytes at output offset 76, the chroma
+control word. (X) The PEN-F shows the same 3-byte difference between its
+modes 5 and 2. (X)
+
+### 6.3 On the PEN-F, COLOR is Natural with different HSL outputs
+
+PEN-F mode 11 against mode 2: the output differs only in offsets 676..965
+(the twelve records and their control word) and 5172..5211 (ten LUT
+pointers). Gamma, tone, six-axis, chroma and the second block are identical.
+(X)
+
+So the base under COLOR on the PEN-F is exactly Natural. With mode 5 as the
+carrier, the E-M5 II base differs from that by the one chroma word of 6.2.
+With mode 2 it would not differ at all, at the cost of losing plain Natural.
+
+### 6.4 The patch changes what COLOR changes, and nothing else
+
+| Check | Result |
+| --- | --- |
+| Patched against stock, mode 5 | differs only in 676..965 and 5172..5211 (X) |
+| Patched against stock, mode 2 | identical, both blocks (X) |
+| Ten LUT pointers, as offsets into the COLOR table | 336 to 2832, equal to the PEN-F's (X) |
+
+An earlier check (4.3) compared the records, the control word and the dirty
+mask but not the LUT pointers. They are covered now.
+
+### 6.5 Other readers of the mode number
+
+Eight places compose the mode from the request. Four are dispatch tables
+inside the stage list, so 6.2 to 6.4 cover their effect. (D, X) The main
+lookup gives modes 2 and 5 the same handler. (B) The other four
+(`0x6049be3c`, `0x604a9f79`, `0x604e1281`, `0x60591797`) are outside the
+stage list and have not been read.
+
+### 6.6 What no check here can show
+
+- A real job has more fields set than the test job. Other branches may run.
+- The ISP writer and the image processor are not exercised. No pixel has
+  been produced.
+- i-Enhance adapts to the scene somewhere. If mode 5 is i-Enhance, that logic
+  still runs and may fight the fixed look.
+- Whether section 1 is loaded on every path that reaches the selector, for
+  example in playback RAW edit.
+
 ## Open questions
 
-1. Is mode 5 really i-Enhance, and what else does i-Enhance change outside
-   the six-axis and HSL stages?
-2. What is mode 10?
-3. What do request bytes 1063, 1071 and 1072 select?
-4. Does anything write into the section tails at run time?
-5. Tone and gamma under the carrier mode: close enough to the PEN-F COLOR base?
+1. Is mode 5 really i-Enhance? What does it change outside the stage list?
+2. Should the carrier be 5, or 2 for an exact PEN-F base?
+3. What do the four unread mode readers do?
+4. What is mode 10?
+5. What do request bytes 1063, 1071 and 1072 select?
 6. Where are Color Creator's wheel and settings on this body?

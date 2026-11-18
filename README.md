@@ -116,6 +116,7 @@ unpacked):
 ```bash
 node tools/emu_color_check.mjs
 node tools/emu_mode_names.mjs
+node tools/emu_stage_diff.mjs
 ```
 
 The COLOR builder code and its gain data are not stored in this repository.
