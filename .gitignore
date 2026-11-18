@@ -1,0 +1,11 @@
+# Vendor firmware and anything decoded from it. Never commit these.
+fw/
+generated/
+
+# Third-party checkouts, pinned in README.md
+om-emu/
+oly_fw_analysis/
+
+__pycache__/
+.venv/
+.DS_Store
