@@ -16,7 +16,7 @@ it passes in om-emu and the patch is reviewed byte by byte.
 - [x] Build GNU binutils for `mn10300-elf` (assembler, linker, objdump).
 - [x] Disassemble the selector and name the hook site
   ([findings, section 2](FINDINGS.md#2-the-selector-and-the-hook-site-2026-11-18)).
-- [ ] Bring up E-M5 II 4.1 in om-emu (model `E118`).
+- [x] Bring up E-M5 II 4.1 in om-emu (model `E118`).
 
 Done when: the selector's table choice is understood well enough to name the
 hook site, and the stock firmware runs in om-emu.
@@ -31,7 +31,8 @@ No new screen. Twelve saturation values are baked into the patch.
 - [x] Hook the selector at `0x604df2b6` and add the COLOR case.
 - [x] Find loaded free space for the patch.
 - [ ] Name the picture modes and pick the carrier.
-- [ ] Run the patched main block in om-emu through S2.
+- [x] Run the patched main block in om-emu through S2.
+- [x] Call the selector directly in om-emu and match the PEN-F records.
 - [ ] Check that nothing writes into the section tail used.
 - [ ] Build the update file and a matching stock restore file.
 

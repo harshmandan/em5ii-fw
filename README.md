@@ -110,6 +110,13 @@ This writes `generated/stage1/main.bin`, a patched main block for om-emu's
 and cannot be installed on a camera. The carrier mode number is still a guess;
 see [findings, section 3](docs/FINDINGS.md).
 
+To check it in the emulator (node 26, with om-emu's E118 and E122 firmware
+unpacked):
+
+```bash
+node tools/emu_color_check.mjs
+```
+
 The COLOR builder code and its gain data are not stored in this repository.
 The build reads them from your own PEN-F firmware file and checks its hash.
 

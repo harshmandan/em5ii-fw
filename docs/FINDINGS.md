@@ -278,8 +278,61 @@ the two displaced instructions and returns to `0x604df2bf`.
 The build writes a patched main block for the emulator only. It does not
 write a file a camera can install.
 
-Status: builds, and the disassembly of the result reads as intended. Not yet
-run in om-emu. Never run on a camera.
+Status: builds, and passes the emulator checks in section 4. Never run on a
+camera.
+
+## 4. Emulator results (2026-11-18)
+
+New tag: **X** means executed in om-emu. om-emu runs the CPU code. It does not
+model the image processor, so nothing here is about pixels.
+
+### 4.1 Stock and patched firmware both run
+
+om-emu's model check passes on stock E-M5 II 4.1 and on the patched main
+block: start, half press, shot, playback, INFO and menu, on the TFT and the
+EVF, with one JPEG written to the emulated card. (X) Its patch audit reports
+no lab hook and no ported address on the patched bytes. (X)
+
+om-emu has no section-loader rule for this family, so it cannot check that
+the patch lies in loaded memory. That rests on section 3.3 alone.
+
+### 4.2 An emulated shot does not reach the selector
+
+Traces on the selector, the hook, the stub, the builder and the ISP writer
+recorded no arrival during a scripted half press and shot. (X) om-emu stands
+in for the capture pipeline, so the picture-processing stages never run in a
+session. Passing 4.1 therefore shows the patch breaks nothing that runs. It
+does not show the patch works.
+
+### 4.3 Direct call: the port matches the PEN-F
+
+`tools/emu_color_check.mjs`
+
+The selector is called directly on a job the script writes, the way om-emu's
+own stage tests do. The job is zero except for its block pointers, the mode
+key, a flags word of all ones and the saturation steps.
+
+| Check | Result |
+| --- | --- |
+| PEN-F, mode 11: the steps change the records | yes (X) |
+| Patched E-M5 II, carrier mode: twelve records equal the PEN-F's | byte-identical (X) |
+| Same: control word and dirty mask equal the PEN-F's | yes (X) |
+| Stock E-M5 II, carrier mode: records differ from patched | yes (X) |
+| Patched E-M5 II, another mode: whole output block equals stock | yes (X) |
+| No lab hook answered in any call | yes (X) |
+
+The carrier path runs 1,590 instructions against the PEN-F's 1,591.
+
+Limits: the job is the script's, not a camera's. A real job has more fields
+set and they may steer other branches. The records are compared before the
+ISP writer uploads them; the upload and the hardware are not exercised.
+
+### 4.4 Picture mode names exist in the firmware
+
+Strings include `COLORTONE_VIVID`, `COLORTONE_NATURAL`, `COLORTONE_PORTRAIT`,
+`COLORTONE_MONOTONE`, `COLORTONE_E_PORTRAIT`, `COLORTONE_COLOR_CREATOR` and
+`IMGPRO_PICTURE_MODE`. (B) Their link to the mode numbers of section 3.1 is
+not traced yet.
 
 ## Open questions
 
