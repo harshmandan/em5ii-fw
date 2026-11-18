@@ -189,12 +189,103 @@ Register use differs slightly: the E-M5 II selector saves `d2, a2, a3` and
 keeps request + 12 in `d2`. The PEN-F saves `d3` too and uses it for that. (D)
 New code must follow the E-M5 II convention.
 
+## 3. Stage 1 groundwork (2026-11-18)
+
+### 3.1 The mode number and the lookup
+
+The mode is composed from the request as `byte 8 << 24 | byte 9 << 16 |
+halfword 10`. (D) Byte 8 is 0 for the plain picture modes, 1 and 2 for the two
+larger groups. The lookup at `0x604de9fe` hashes it into the table at
+`0x6062eae0` and jumps to a handler. Modes that share a handler get the same
+table descriptor. (D)
+
+| Modes | Handler |
+| --- | --- |
+| 1 | `0x604dec00` |
+| 2, 5 | `0x604dec14` |
+| 3 | `0x604dec46` |
+| 4, 8 | `0x604dec5c` |
+| 10 | `0x604dec72` |
+| `0x7d0` | `0x604dec88` |
+
+Each handler picks one of two descriptors by request byte 1063. Request bytes
+1071 and 1072 can then replace the choice. (D) What those three bytes mean is
+not known.
+
+Names are a guess. If the numbering follows the menu order, 1 to 5 would be
+Vivid, Natural, Muted, Portrait and i-Enhance. That would make Natural and
+i-Enhance share a handler. (I, unconfirmed)
+
+### 3.2 What the builder takes as input
+
+The builder reads twelve signed bytes through `a1`, at index `2 * inner +
+outer` for record `6 * outer + inner`. (D) That is the wheel order in
+oly_fw_analysis `HSL_TABLES.md`. Each byte is the slider step, -5 to 5. A
+negative step selects the second gain of the pair. The scaled product is
+divided by 5. (D)
+
+So a fixed look is twelve small integers. The PEN-F reads them from request +
+1076. Stage 1 points `a1` at twelve bytes inside the patch, so the size of the
+E-M5 II request does not matter yet.
+
+### 3.3 Loaded sections and free space
+
+`tools/section_tails.py`
+
+The section table is at `0x60026d24`. The loaded end of each section comes
+from a switch at `0x600420cf`, not from the next section's start. (D, B) The
+flat file address equals the runtime address in every section. (B)
+
+| Section | Loaded range | Free tail | From |
+| ---: | --- | ---: | --- |
+| 0 | `0x60130000..0x601d7000` | 940 | `0x601d6c54` |
+| 1 | `0x60218000..0x603f8800` | 1,752 | `0x603f8128` |
+| 2 | `0x60411000..0x6068f800` | 112 | `0x6068f790` |
+| 3 | `0x606c6000..0x60a5f800` | 1,120 | `0x60a5f3a0` |
+| 4 | `0x60aaa000..0x60fe2800` | 1,536 | `0x60fe2200` |
+| 5 | `0x61042000..0x61124000` | 352 | `0x61123ea0` |
+
+The file has far longer FF runs after each of these, up to 3.4 MB. They are
+past the loaded end and are not usable as they stand.
+
+The selector and the COLOR table are in section 2, which has only 112 free
+bytes. The stage 1 patch needs 695. It goes in the section 1 tail. Total
+loaded free space is about 5.8 KB. That is enough for stages 1 and 2. It is
+not enough for an editor screen, which will need a section's loaded end
+extended. (I)
+
+Not yet checked: that nothing writes into these tails at run time, and that
+section 1 is always loaded before the selector runs.
+
+### 3.4 The stage 1 patch
+
+`tools/build_stage1.py`, source in `patches/stage1/`
+
+| Part | Address | Bytes | Origin |
+| --- | --- | ---: | --- |
+| Hook | `0x604df2b6` | 9 | `jmp` to the stub, four `nop` |
+| Saturation steps | `0x603f8140` | 12 | `patches/stage1/look.json` |
+| Gain pointers | `0x603f8150` | 48 | rebuilt for the new address |
+| Gain data | `0x603f8180` | 40 | read from the PEN-F file at build time |
+| COLOR builder | `0x603f81a8` | 504 | read from the PEN-F file at build time, one address repointed |
+| Stub | `0x603f83a0` | 87 | `patches/stage1/stub.s` |
+
+The stub composes the mode. For the carrier mode it calls the builder with the
+COLOR table and the baked steps, then leaves through the stock exits at
+`0x604df2a6` or `0x604df2f5`, as the PEN-F does. For any other mode it replays
+the two displaced instructions and returns to `0x604df2bf`.
+
+The build writes a patched main block for the emulator only. It does not
+write a file a camera can install.
+
+Status: builds, and the disassembly of the result reads as intended. Not yet
+run in om-emu. Never run on a camera.
+
 ## Open questions
 
-1. What decides the mode number in request bytes 8..11, and which picture mode
-   can carry the new look?
-2. Where do the twelve saturation values come from in stage 1? The PEN-F reads
-   them at request + 1076. Is that offset inside the E-M5 II request, and unused?
-3. Which FF runs lie inside a loaded section and are safe for new code?
-4. Does the flag test `(56,a2) & 2` after the PEN-F builder call matter here?
+1. Which picture mode is which number? Needed to choose the carrier mode.
+2. What do request bytes 1063, 1071 and 1072 select?
+3. Does anything write into the section tails at run time?
+4. The carrier mode keeps its own matrix, gamma and tone. Is that base close
+   enough to the PEN-F COLOR base, or must those be redirected too?
 5. Where are Color Creator's wheel and settings on this body?

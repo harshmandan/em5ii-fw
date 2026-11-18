@@ -1,5 +1,13 @@
 # Roadmap
 
+## Goal
+
+A new colour UI on the E-M5 II, modelled on what OM System ships on the OM-3
+and PEN-F: COLOR profiles, an on-camera editor, and film looks. The OM-3
+screens cannot be copied over, because they are built on a newer GUI that this
+body does not have. So the same feature is rebuilt on the E-M5 II's own GUI.
+The stages below get there in steps that can each be tested.
+
 Each stage ends with something that can be checked. No stage is flashed before
 it passes in om-emu and the patch is reviewed byte by byte.
 
@@ -17,12 +25,15 @@ hook site, and the stock firmware runs in om-emu.
 
 No new screen. Twelve saturation values are baked into the patch.
 
-- Find what sets the mode number and pick the picture mode to carry the look.
-- Port the PEN-F COLOR builder and its gain data.
-- Hook the selector at `0x604df2b6` and add the COLOR case.
-- Qualify the code space used.
-- Build a patch overlay and run it in om-emu through S2.
-- Build the update file and a matching stock restore file.
+- [x] Find how the mode number is composed.
+- [x] Port the PEN-F COLOR builder and its gain data (taken from the PEN-F
+  file at build time, not stored here).
+- [x] Hook the selector at `0x604df2b6` and add the COLOR case.
+- [x] Find loaded free space for the patch.
+- [ ] Name the picture modes and pick the carrier.
+- [ ] Run the patched main block in om-emu through S2.
+- [ ] Check that nothing writes into the section tail used.
+- [ ] Build the update file and a matching stock restore file.
 
 Done when: the overlay runs clean in om-emu and the first camera test shows the
 look in a JPEG while every other picture mode is unchanged.
@@ -40,7 +51,8 @@ look in a JPEG while every other picture mode is unchanged.
 - Add the editor screen.
 
 This is the largest stage. The wheel drawing code of the PEN-F has no twin on
-this body, so most of the screen is new work.
+this body, so most of the screen is new work. It also needs more room than the
+loaded section tails offer, so a section's loaded end must be extended first.
 
 ## Not planned
 
