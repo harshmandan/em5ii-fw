@@ -5,19 +5,21 @@ it passes in om-emu and the patch is reviewed byte by byte.
 
 ## Stage 0: tooling
 
-- Build GNU binutils for `mn10300-elf` (assembler, linker, objdump).
-- Bring up E-M5 II 4.1 in om-emu (`--model E118`).
-- Disassemble the selector near `0x604df20f` and the ISP writer at `0x6049d252`.
+- [x] Build GNU binutils for `mn10300-elf` (assembler, linker, objdump).
+- [x] Disassemble the selector and name the hook site
+  ([findings, section 2](FINDINGS.md#2-the-selector-and-the-hook-site-2026-11-18)).
+- [ ] Bring up E-M5 II 4.1 in om-emu (model `E118`).
 
 Done when: the selector's table choice is understood well enough to name the
-hook site.
+hook site, and the stock firmware runs in om-emu.
 
 ## Stage 1: one fixed film look
 
 No new screen. Twelve saturation values are baked into the patch.
 
+- Find what sets the mode number and pick the picture mode to carry the look.
 - Port the PEN-F COLOR builder and its gain data.
-- Add a COLOR case to the selector, tied to one picture mode.
+- Hook the selector at `0x604df2b6` and add the COLOR case.
 - Qualify the code space used.
 - Build a patch overlay and run it in om-emu through S2.
 - Build the update file and a matching stock restore file.
