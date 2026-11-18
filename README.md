@@ -62,11 +62,37 @@ The decoded main blocks must hash to:
 | E-M5 II | `fw/em5ii_4.1/00_0100_40300020.decoded.bin` | `ecd9603c4a264a358d91ef110a05f9236055e6369399f7c7de5985b21a2fd96a` |
 | PEN-F | `fw/penf_3.1/00_0100_403a0020.decoded.bin` | `a2eb1d1f1afe47cce148e9aae0a04dfb82547d9de9437d342e012341140913f4` |
 
+## Toolchain
+
+Disassembly and, later, patch builds need GNU binutils for `mn10300-elf`.
+Version 2.45 was used. Build it out of tree, under the git-ignored `toolchains/`:
+
+```bash
+mkdir -p toolchains/build && cd toolchains
+curl -fsSLO https://ftp.gnu.org/gnu/binutils/binutils-2.45.tar.xz && tar xf binutils-2.45.tar.xz
+cd build
+../binutils-2.45/configure --target=mn10300-elf --disable-nls --disable-werror \
+  --disable-gdb --disable-sim --disable-gprof --disable-gold --disable-libctf \
+  --with-system-zlib --disable-shared
+make -j8 all-gas all-ld all-binutils MAKEINFO=true
+```
+
+On macOS `--with-system-zlib` is required: the bundled zlib does not compile
+against the current SDK.
+
+To list a range of the E-M5 II main block:
+
+```bash
+toolchains/build/binutils/objdump -b binary -m mn10300 -D -z --adjust-vma=0x60021020 \
+  --start-address=0x604df257 --stop-address=0x604df302 fw/em5ii_4.1/00_0100_40300020.decoded.bin
+```
+
 ## Reproduce the findings
 
 ```bash
 python3 tools/find_color_table.py
 python3 tools/match_penf_code.py
+python3 tools/selector_twins.py
 ```
 
 Each script checks its input hashes first and exits non-zero if a finding in
