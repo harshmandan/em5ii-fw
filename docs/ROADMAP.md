@@ -47,6 +47,8 @@ look in a JPEG while every other picture mode is unchanged.
 
 ## Stage 2: looks from the SD card
 
+Design and options: [STAGE2.md](STAGE2.md).
+
 - Read a small file of looks at start-up, as Caduceus does with `LOOKS.BIN`.
 - Select a look through an existing menu item.
 - Write the look name to EXIF.

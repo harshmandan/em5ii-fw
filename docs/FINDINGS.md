@@ -571,6 +571,47 @@ reports. (R) No report was found for the E-M5 II.
 If no matching file is found, the PEN-F client takes a fallback into the
 ordinary start-up. (R) The E-M5 II has the matching fallback. (R)
 
+## 9. Groundwork for stage 2 (2026-11-18)
+
+Ad hoc om-emu runs of the stage list (`0x604e02c6`) on the test job of 4.3.
+Not yet in a committed script.
+
+### 9.1 Mode 5 reads the same request bytes as mode 2
+
+With a read trace on the request block, modes 2 and 5 read the same bytes:
+0-3, 8-16, 28-29, 84-87, 924-927, 948-951, 960-963, 996-1003, 1022-1027,
+1030-1035, 1038-1039, 1044-1045, 1059-1061, 1063-1067, 1071-1072 and
+1092-1093. (X) So no extra setting, such as an i-Enhance effect level,
+reaches these stages for mode 5. On a zero job; a real job may take other
+branches.
+
+### 9.2 What single request bytes change, in mode 5
+
+Each byte set to 1, everything else as before: (X)
+
+| Request byte | Output that moves | Likely meaning |
+| ---: | --- | --- |
+| 1059, 1060 | 4656-4657, the tone LUT pointer | contrast or gradation (I) |
+| 1061 | 132-134 | unknown |
+| 1063 | six-axis values, HSL records, LUT pointers | colour space (I) |
+| 1066 | 77-78, inside the chroma word | saturation slider (I) |
+| 1071, 1072 | gamma tables and more | a mode-level switch (I) |
+| 1064, 1065, 1067, 1092 | nothing | not used on this path |
+
+The meanings are guesses from what moves. None is tied to a menu item yet.
+
+### 9.3 How Caduceus loads looks on the OM-3
+
+From om-emu's study of caduceus-om3: a hook on the half-press handler runs a
+gate until the card has been read once; the films are kept in an unused tail
+of settings store M, which the camera itself saves on the return to shooting
+and at power-off; code too large for the section tails is copied to the heap;
+one section's loaded end is raised to gain room. (R)
+
+Each of those needs its own groundwork on the E-M5 II: the file calls, a task
+that may call them, the settings store's layout and free tail, and the
+half-press handler. None has been read here.
+
 ## Open questions
 
 1. Is mode 5 really i-Enhance? What does it change outside the stage list?

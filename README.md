@@ -8,6 +8,7 @@ patch builds and passes emulator checks. It is untested on hardware.
 
 - [Findings](docs/FINDINGS.md): what the E-M5 II firmware already has and what is missing.
 - [Roadmap](docs/ROADMAP.md): the staged plan.
+- [Stage 2 design](docs/STAGE2.md): three ways to get more than one look.
 
 ## Warning
 
