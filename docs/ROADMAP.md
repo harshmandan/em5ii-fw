@@ -30,7 +30,8 @@ No new screen. Twelve saturation values are baked into the patch.
   file at build time, not stored here).
 - [x] Hook the selector at `0x604df2b6` and add the COLOR case.
 - [x] Find loaded free space for the patch.
-- [ ] Name the picture modes and pick the carrier.
+- [x] Name picture modes 1 to 4; 5 and 8 by elimination.
+- [ ] Confirm the carrier (mode 5) on a camera or by a further trace.
 - [x] Run the patched main block in om-emu through S2.
 - [x] Call the selector directly in om-emu and match the PEN-F records.
 - [ ] Check that nothing writes into the section tail used.

@@ -212,9 +212,7 @@ Each handler picks one of two descriptors by request byte 1063. Request bytes
 1071 and 1072 can then replace the choice. (D) What those three bytes mean is
 not known.
 
-Names are a guess. If the numbering follows the menu order, 1 to 5 would be
-Vivid, Natural, Muted, Portrait and i-Enhance. That would make Natural and
-i-Enhance share a handler. (I, unconfirmed)
+Section 5 names these numbers.
 
 ### 3.2 What the builder takes as input
 
@@ -334,11 +332,76 @@ Strings include `COLORTONE_VIVID`, `COLORTONE_NATURAL`, `COLORTONE_PORTRAIT`,
 `IMGPRO_PICTURE_MODE`. (B) Their link to the mode numbers of section 3.1 is
 not traced yet.
 
+## 5. Picture mode numbers (2026-11-18)
+
+`tools/emu_mode_names.mjs`
+
+### 5.1 The request field has a name
+
+A debug table in the main block labels the request's mode field
+`IMGPRO_PICTURE_MODE` with members `ucPictureGroup`, `ucPictureType` and
+`usPictureMode`. (B) That fits request bytes 8, 9 and halfword 10 of
+section 3.1. (I)
+
+The settings name table in block `0106` lists the picture modes in one fixed
+order, three times over (`MODE_COLORTONE_*_ONOFF`, `MODE_BRACKET_PICT_*`):
+I_FINISH, VIVID, NATURAL, FLAT, SOFT, MONOCHROME, CUSTOM, then the art
+filters. (B) FLAT and SOFT are the internal names for Muted and Portrait. (I)
+That is menu order, not the mode number.
+
+### 5.2 Numbers 1 to 4 by their six-axis presets
+
+The two stage lists (`0x604f8543` on the PEN-F, `0x604e02c6` on the E-M5 II)
+make the same calls in the same order. (D) The six-axis colour builder is the
+call at the same position: `0x604f55de` and `0x604dd528`.
+
+Called in om-emu for each mode number, it writes six saturation and six hue
+values:
+
+| Mode | PEN-F | E-M5 II |
+| ---: | --- | --- |
+| 1 | 18,4,24,0,8,8 / 0,2,4,-1,-6,0 | 18,6,24,0,8,8 / -2,7,4,-1,-6,0 |
+| 2 | all zero | 0,2,0,0,0,0 / -2,5,0,0,0,0 |
+| 3 | -22,4,-16,0,4,-8 / 3,0,-3,9,8,10 | -22,6,-16,0,4,-8 / 1,5,-3,9,8,10 |
+| 4 | 14,0,0,5,0,0 / -1,0,2,-2,0,0 | 14,2,0,5,0,0 / -3,5,2,-2,0,0 |
+| 5 | as mode 2 | as mode 2 |
+| 8 | as mode 4 | as mode 4 |
+| 10 | 18,4,24,0,8,8 / 0,2,4,-1,-20,0 | 14,2,24,-4,4,8 / -2,7,4,-1,-20,0 |
+| 11 | all zero | not a mode |
+
+- PEN-F modes 1, 3 and 4 give exactly the Vivid, Muted and Portrait sets
+  published in oly_fw_analysis `docs/color/MODES.md`. Mode 2 gives the neutral
+  set listed there for Natural. (X, R)
+- For modes 1, 2, 3, 4, 5 and 8 the E-M5 II set is the PEN-F set plus one
+  fixed offset: saturation 0,2,0,0,0,0 and hue -2,5,0,0,0,0. (X)
+
+| Mode | Name | Basis |
+| ---: | --- | --- |
+| 1 | Vivid | preset match (X, R) |
+| 2 | Natural | preset match (X, R) |
+| 3 | Muted | preset match (X, R) |
+| 4 | Portrait | preset match (X, R) |
+| 5 | i-Enhance | same colour set and same table handler as Natural (X, D); the name is by elimination (I) |
+| 8 | e-Portrait | same colour set and same table handler as Portrait (X, D); the name is by elimination (I) |
+| 10 | unknown | Vivid-like, one hue value at -20 |
+
+### 5.3 What this means for the carrier
+
+On the PEN-F, COLOR (mode 11) uses the neutral six-axis set, the same as
+Natural. (X) On the E-M5 II, modes 2 and 5 are the two with that base. So
+mode 5 gives the patch the same six-axis base the PEN-F uses for COLOR, and
+leaves Natural untouched. (I)
+
+Mode 5 costs the user i-Enhance, if that name is right. i-Enhance also adapts
+to the scene somewhere outside this stage. Whether that still runs under the
+patch is not known.
+
 ## Open questions
 
-1. Which picture mode is which number? Needed to choose the carrier mode.
-2. What do request bytes 1063, 1071 and 1072 select?
-3. Does anything write into the section tails at run time?
-4. The carrier mode keeps its own matrix, gamma and tone. Is that base close
-   enough to the PEN-F COLOR base, or must those be redirected too?
-5. Where are Color Creator's wheel and settings on this body?
+1. Is mode 5 really i-Enhance, and what else does i-Enhance change outside
+   the six-axis and HSL stages?
+2. What is mode 10?
+3. What do request bytes 1063, 1071 and 1072 select?
+4. Does anything write into the section tails at run time?
+5. Tone and gamma under the carrier mode: close enough to the PEN-F COLOR base?
+6. Where are Color Creator's wheel and settings on this body?
