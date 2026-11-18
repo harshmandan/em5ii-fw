@@ -450,9 +450,15 @@ mask but not the LUT pointers. They are covered now.
 
 Eight places compose the mode from the request. Four are dispatch tables
 inside the stage list, so 6.2 to 6.4 cover their effect. (D, X) The main
-lookup gives modes 2 and 5 the same handler. (B) The other four
-(`0x6049be3c`, `0x604a9f79`, `0x604e1281`, `0x60591797`) are outside the
-stage list and have not been read.
+lookup gives modes 2 and 5 the same handler. (B) The other four do not test
+for a plain picture mode: (D)
+
+| Site | What it does with the mode |
+| --- | --- |
+| `0x6049be3c` | stores it at `(12,a3)` |
+| `0x604a9f79` | stores it in a job field at offset 12192 |
+| `0x604e1281` | returns 1 for four art-filter ids (`0x200000c`, `0x2000012`, `0x2000040`, `0x2000065`), else 0 |
+| `0x60591797` | passes it as an argument to `0x600241ae`, which looks like a log call |
 
 ### 6.6 What no check here can show
 
@@ -461,8 +467,60 @@ stage list and have not been read.
   been produced.
 - i-Enhance adapts to the scene somewhere. If mode 5 is i-Enhance, that logic
   still runs and may fight the fixed look.
-- Whether section 1 is loaded on every path that reaches the selector, for
-  example in playback RAW edit.
+- That the loader's section counter only runs upward (section 7.1).
+
+## 7. Load order and the update file (2026-11-18)
+
+### 7.1 Sections load one at a time
+
+The loader task at `0x6004210f` reads a section counter at `0xa1c18af0`,
+copies that section up to the end the selector at `0x600420ad` returns, runs
+the init step of 6.1 for the first sections, and sets that section's bit in a
+mask at `0xa1c18af8`. (D) The patch is in section 1 and the selector that
+jumps to it is in section 2. If the counter runs upward, the patch is in
+memory before the selector can execute. (I) The counter's direction was not
+traced.
+
+### 7.2 The SD update client exists on this body
+
+The main block holds the strings `DCOLYMP`, `E118????BIN` and `S118????BIN`
+next to each other at `0x60dac478`, as the PEN-F holds `E122????BIN` and
+`S122????BIN`. (B) On the PEN-F these belong to the SD update client, which
+reads `DCOLYMP/E122xxxx.BIN` from the card. (R) The E-M5 II client itself has
+not been read here. The `S` name is a separate boot-image path and is not
+used. (R)
+
+### 7.3 Packing
+
+`tools/pack_update.py`, using oly_fw_analysis's container code.
+
+- The stock update file parses with all four checksums valid and rebuilds
+  byte for byte from its parts. (B)
+- The patched main differs from stock in 695 bytes, all inside the two ranges
+  the build declares. (B)
+- Replacing the main payload and repairing its additive checksum gives a file
+  that parses again, with the component header unchanged. (B)
+- Two layouts are written: main block only, and all four blocks with only the
+  main replaced. The second equals the stock file everywhere outside the main
+  component. (B)
+- om-emu accepts the four-block file as `--main` and its model check passes
+  as in 4.1. (X) It refuses the main-only file, because it expects the
+  release's layout. That is the lab's rule, not evidence about the camera.
+
+### 7.4 What is not known about installing
+
+- No modified file from this project has been installed on any camera.
+- Whether this body accepts a main-only file. On the PEN-F a same-version
+  main-only package passes the mapped acceptance path and component-selective
+  files have worked on a real camera. (R) Nothing shows that for the E-M5 II.
+- How the SD client is started. On the PEN-F even upstream has not connected
+  the button press to the client in code. (R)
+- What happens after a failed or interrupted write. No recovery route is
+  established for this body. The update rewrites whole components and has no
+  rollback. (R, PEN-F)
+- The one published modified file for E-M5 II 4.1 changes 6 bytes of main in
+  a four-block file. (R) It shows the checksum scheme was enough for that
+  file. It does not show that added code in a section tail runs.
 
 ## Open questions
 

@@ -3,8 +3,8 @@
 Research into adding COLOR profiles (the 12-sector colour wheel of the PEN-F and
 OM-3) to the Olympus OM-D E-M5 Mark II, firmware 4.1.
 
-**Status: research only.** Nothing here has been flashed to a camera. No patch
-exists yet.
+**Status: research only.** Nothing here has been flashed to a camera. A first
+patch builds and passes emulator checks. It is untested on hardware.
 
 - [Findings](docs/FINDINGS.md): what the E-M5 II firmware already has and what is missing.
 - [Roadmap](docs/ROADMAP.md): the staged plan.
@@ -118,6 +118,18 @@ node tools/emu_color_check.mjs
 node tools/emu_mode_names.mjs
 node tools/emu_stage_diff.mjs
 ```
+
+To pack update files:
+
+```bash
+python3 tools/pack_update.py
+```
+
+This writes a patched file and a stock restore file under `generated/stage1/`.
+**Nothing from this project has been installed on a camera.** The tool checks
+the file format only. How this body accepts and starts an SD update is not
+established here, and no recovery route is known if a write fails. Read
+[findings, section 7](docs/FINDINGS.md) before going near a camera.
 
 The COLOR builder code and its gain data are not stored in this repository.
 The build reads them from your own PEN-F firmware file and checks its hash.
